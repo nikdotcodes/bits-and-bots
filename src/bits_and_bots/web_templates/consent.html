@@ -1,0 +1,67 @@
+{% extends "base.html" %}{% block title %}Parental consent form{% endblock %}{% block content %}
+<h1>Consent form 📝</h1>
+<p class="badge">Must be completed by a parent or legal guardian</p>
+{% if sent %}
+    <div class="card">
+        <h2>Consent received ✅</h2>
+        <p>
+            Thank you. A club volunteer will check
+            and sign off your form before your child's first session. Keep an eye on your email.
+        </p>
+    </div>
+{% else %}
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% from 'macros.html' import field %}
+            <h3>About your child</h3>
+            <div class="row">
+                {{ field("Child's first name",'child_first_name',required=True) }}
+                {{ field("Last initial only",'child_last_initial',required=True,placeholder='e.g. W') }}
+                {{ field('Year group','child_year_group',required=True,placeholder='Year 3-6') }}
+            </div>
+            <h3>Parent / guardian</h3>
+            <div class="row">
+                {{ field('Full name','parent_name',required=True) }}
+                {{ field('Email','parent_email',type='email',required=True) }}
+                {{ field('Phone','parent_phone',required=True) }}
+            </div>
+            {{ field('Emergency contact (name & number)','emergency_contact',placeholder='Someone else we can call in an emergency') }}
+            <p style="font-size: .85rem;">
+                I agree that Bits and Bots may contact the emergency contact named above if we cannot reach me and there is an emergency involving my child.
+            </p>
+            <label>Medical / allergy notes we should know about</label>
+            <textarea name="medical_notes"
+                      rows="2"
+                      placeholder="Allergies, medication, anything else"></textarea>
+            <h3>Permissions</h3>
+            <label>
+                <input type="checkbox"
+                       name="ai_tools_consent"
+                       value="yes"
+                       style="width:auto">
+                I have read the club's <a href="/safety/ai">AI rules</a> and understand how AI tools are (and are not) used. I understand that Bits and Bots does not enter children's or families' personal data into public AI tools, and that AI is only used as a tool in the development of a classifier model or to aid in the production of training materials.
+            </label>
+            <label>
+                <input type="checkbox"
+                       name="medical_consent"
+                       value="yes"
+                       style="width: auto">
+                I give my explicit consent for Bits and Bots to record and process the allergy and medical information provided above for the sole purpose of keeping my child safe during sessions. I understand this is sensitive personal data, will be shared only with session leaders who need it, and will be deleted at the end of club attendance.
+            </label>
+            <h3>Declaration</h3>
+            <div class="row">
+                {{ field('Type your full name to sign','signature_name',required=True) }}
+                {{ field('Date','signed_date',type='date',required=True) }}
+            </div>
+            <label>Optional: if you have a paper consent form upload the scan here (max 5 MB)</label>
+            <input type="file" name="consent_file" accept=".pdf,image/*">
+            <p>
+                <button class="btn" type="submit">Submit consent</button>
+            </p>
+            <p style="font-size:.85rem">
+                By submitting this form, I confirm I am the parent or legal guardian of the child named above and I agree that Bits and Bots may use these details to manage their registration and to contact me about sessions, in line with the <a href="/privacy-notice">Privacy Notice</a>.
+            </p>
+        </form>
+    </div>
+{% endif %}
+{% endblock %}

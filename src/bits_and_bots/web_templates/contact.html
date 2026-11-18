@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}Contact us{% endblock %}{% block content %}
+<h1>Contact us ✉️</h1>
+<p class="badge">For parents, carers and volunteers</p>
+{% if sent %}
+    <div class="card">
+        <h2>Thank you! 🎉</h2>
+        <p>
+            Your message is with our volunteer team.
+            We usually reply within a few days during term time.
+        </p>
+    </div>
+{% else %}
+    <div class="card">
+        <form method="post">
+            {% from 'macros.html' import field %}
+            <div class="row">{{ field('Your name','name',required=True) }}{{ field('Email','email',type='email',required=True) }}</div>
+            <div class="row">{{ field('Phone (optional)', 'phone') }}{{ field("Child's year group (optional)",'child_year_group',placeholder='e.g. Year 4') }}</div>
+            <label>Message *</label><textarea name="message" rows="5" required></textarea>
+            <p>
+                <button class="btn" type="submit">Send message</button>
+            </p>
+            <p style="font-size:.85rem">
+                By submitting this form, I agree that Bits and Bots may use the details above to respond to my enquiry, in line with the Privacy Notice. I understand my message will be kept for 12 months and then deleted.
+            </p>
+        </form>
+    </div>
+{% endif %}
+{% endblock %}

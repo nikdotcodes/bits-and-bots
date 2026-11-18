@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+              rel="stylesheet">
+        <title>{% block title %}{{ club_name }}{% endblock %}</title>
+        <link rel="stylesheet" href="/static/styles.css">
+    </head>
+    <body>
+        <header>
+            <a class="logo" href="/">⚡ {{ club_name }}</a>
+            <nav>
+                <a href="/about">About</a>
+                <a href="/blog">Blog</a>
+                <a href="/microbit">micro:bit</a>
+                <a href="/python">Python</a>
+                <a href="/resources">Kids' Resources</a>
+                <a href="/safety/online">Online Safety</a>
+                <a href="/safety/ai">AI &amp; Us</a>
+                <a href="/donate">Donate</a>
+                <a href="/contact">Contact</a>
+                <a href="/consent">Consent Form</a>
+                <a class="nav-cta" href="/volunteers">Volunteer Login</a>
+            </nav>
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <footer>
+            {{ club_name }} · An independent club, in Bishops Lydeard ·
+            Privacy & Data: <a style="color:var(--yellow)" href="/privacy-notice">our privacy notice</a>
+            <br>
+            All club sessions are led by DBS-checked volunteers. Parental consent is required for every child.
+        </footer>
+    </body>
+</html>

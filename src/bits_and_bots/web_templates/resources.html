@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% block title %}Kids' resources{% endblock %}{% block content %}
+<h1>Resources for young coders 🚀</h1>
+<p class="badge">No login needed · parent-approved links only</p>
+<div class="grid">
+    {% for l in links %}
+        <div class="card">
+            <h3><a href="{{ l.url }}">{{ l.title }}</a></h3>
+            <p>{{ l.blurb }}</p>
+        </div>
+    {% endfor %}
+</div>
+<div class="card">
+    <p>
+        💡 <strong>Tip for grown-ups:</strong> sit with your child the first
+        time they try a new site, and revisit our <a href="/safety/online">online safety
+        promises</a> together.
+    </p>
+</div>
+{% endblock %}

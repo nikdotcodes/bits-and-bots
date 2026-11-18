@@ -1,0 +1,7 @@
+{% macro field(label, name, type='text', required=False, placeholder='') %}
+    <label>{{ label }}{% if required %} *{% endif %}</label>
+    <input type="{{ type }}"
+           name="{{ name }}"
+           {% if required %}required{% endif %}
+           placeholder="{{ placeholder }}">
+{% endmacro %}

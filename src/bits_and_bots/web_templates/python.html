@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% block title %}From blocks to Python{% endblock %}{% block content %}
+<h1>From blocks to Python 🐍</h1>
+<div class="card">
+    <p>
+        Block coding is the perfect on-ramp, but eventually children want
+        to type <em>real</em> code. When they're ready, we move to <strong>MicroPython</strong>
+        using the official <a href="https://python.microbit.org/v/3">micro:bit Python Editor</a>
+        - it even shows the block version of your code side by side, so nothing feels like
+        starting over.
+    </p>
+</div>
+<div class="card">
+    <h3>A first taste - this will run on a micro:bit and show a beating heart ❤️</h3>
+    <pre style="background:#1c2331;color:#cde3ff;padding:1rem;border-radius:10px;overflow:auto">
+from microbit import *
+
+while True:
+    display.show(Image.HEART)
+    sleep(500)
+    display.show(Image.HEART_SMALL)   # a tiny heart!
+    sleep(500)
+    </pre>
+    <p>
+        Try it! Copy and Paste into the <a href="https://python.microbit.org/v/3">official Python Editor</a> and see the results.
+    </p>
+</div>
+<div class="grid">
+    <div class="card">
+        <h3>How we bridge the gap</h3>
+        <ul>
+            <li>Same projects, rebuilt in Python - familiar goals, new syntax</li>
+            <li>Pair programming: one types, one navigates, then swap</li>
+            <li>"Blocks → code" view in the editor as training wheels</li>
+            <li>Small wins first: scrolling text, then buttons, then games</li>
+        </ul>
+    </div>
+    <div class="card">
+        <h3>Why Python?</h3>
+        <ul>
+            <li>The most-taught language in UK schools and beyond</li>
+            <li>Free forever, runs everywhere</li>
+            <li>A skill that lasts: data science, games, robotics, AI</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

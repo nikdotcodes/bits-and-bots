@@ -1,0 +1,32 @@
+[project]
+name = "bits-and-bots"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Nik Walne", email = "hi@nik.codes" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.162.6",
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "bcrypt<5",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.33",
+    "supabase>=2.4.0",
+    "python-dotenv>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "djlint>=1.50.0",
+    "pytest>=8.3.0",
+]
+
+[project.scripts]
+bits-and-bots = "bits_and_bots:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"

@@ -1,0 +1,79 @@
+{% extends "base.html" %}{% block title %}Volunteer dashboard{% endblock %}{% block content %}
+{% from 'macros.html' import field %}
+<h1>Volunteer dashboard</h1>
+<p class="badge">Signed in as {{ volunteer['name'] }} ({{ volunteer['email'] }})</p>
+<p><a class="btn ghost" href="/volunteers/logout">Sign out</a></p>
+<div class="card"><h2>📋 Consent store {% if pending %}<span class="badge">{{ pending }} pending</span>{% endif %}</h2>
+    <table>
+        <tr>
+            <th>Child</th>
+            <th>Year</th>
+            <th>Parent</th>
+            <th>Photo</th>
+            <th>Walk home</th>
+            <th>AI info</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for c in consents %}
+            <tr class="status-{{ c['status'] }}">
+                <td>{{ c['child_first_name'] }} {{ c['child_last_initial'] }}.</td>
+                <td>{{ c['child_year_group'] }}</td>
+                <td>
+                    {{ c['parent_name'] }}
+                    <br>
+                    <small>{{ c['parent_email'] }}</small>
+                </td>
+                <td>{{ '✅' if c['photo_consent']=='yes' else '—' }}</td>
+                <td>{{ '✅' if c['walking_home_alone']=='yes' else '—' }}</td>
+                <td>{{ '✅' if c['ai_tools_consent']=='yes' else '—' }}</td>
+                <td>{{ c['status'].replace('_', ' ') }}{% if c["signed_off_by"] %}<br><small>by {{ c['signed_off_by'] }}</small>{% endif %}</td>
+                <td>
+                    {% if c["file_name"] %}<a href="/volunteers/consents/{{ c['id'] }}/file">📄 scan</a>{% endif %}
+                    {% if c["status"]=="pending" %}
+                        <form method="post"
+                              action="/volunteers/consents/{{ c['id'] }}/signoff"
+                              style="display:inline">
+                            <button class="btn blue" name="decision" value="approve">Sign off</button>
+                            <button class="btn ghost" name="decision" value="reject">Reject</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+<div class="card">
+    <h2>📚 Teaching resources</h2>
+    {% for r in resources %}
+        <p>
+            <strong>{{ r['title'] }}</strong> <span class="badge">{{ r['category'] }}</span>
+            <br>
+            {{ r['description'] }} <a href="{{ r['url'] }}">{{ r['url'] }}</a>
+        </p>
+    {% endfor %}
+    <h3>Add a resource</h3>
+    <form method="post" action="/volunteers/resources">
+        <div class="row">
+            {{ field('Title','title',required=True) }}
+            {{ field('URL','url',required=True,placeholder='https://...') }}
+            {{ field('Category','category',placeholder='session-plan / microbit / python / safety') }}
+        </div>
+        <label>Description</label><input name="description">
+        <p>
+            <button class="btn">Add</button>
+        </p>
+    </form>
+</div>
+<div class="card">
+    <h2>✉️ Contact messages</h2>
+    {% for m in messages %}
+        <p>
+            <strong>{{ m['name'] }}</strong> &lt;{{ m['email'] }}&gt; {{ m['child_year_group'] }}
+            <br>
+            {{ m['message'] }}
+            <br>
+            <small>{{ m['created_at'][:10] }}</small>
+        </p>
+    {% else %}<p>No messages yet.</p>{% endfor %}</div>
+{% endblock %}
