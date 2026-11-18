@@ -40,8 +40,6 @@
         medical_notes text not null default '',
         ai_tools_consent text not null default 'no' check (ai_tools_consent in ('yes','no')),
         medical_consent text not null default 'no' check (medical_consent in ('yes','no')),
-        photo_consent text not null default 'no' check (photo_consent in ('yes','no')),
-        walking_home_alone text not null default 'no' check (walking_home_alone in ('yes','no')),
         signature_name text not null,
         signed_date text not null,
         status text not null default 'pending' check (status in ('pending','signed_off','rejected')),
@@ -151,7 +149,7 @@
         insert into public.consent_submissions (
             child_first_name, child_last_initial, child_year_group,
             parent_name, parent_email, parent_phone, emergency_contact,
-            medical_notes, medical_consent, photo_consent, walking_home_alone,
+            medical_notes, medical_consent,
             ai_tools_consent, signature_name, signed_date, file_name,
             storage_path, created_at
         ) values (
@@ -164,8 +162,6 @@
             p_payload->>'emergency_contact',
             p_payload->>'medical_notes',
             coalesce(p_payload->>'medical_consent', 'no'),
-            coalesce(p_payload->>'photo_consent', 'no'),
-            coalesce(p_payload->>'walking_home_alone', 'no'),
             coalesce(p_payload->>'ai_tools_consent', 'no'),
             p_payload->>'signature_name',
             p_payload->>'signed_date',

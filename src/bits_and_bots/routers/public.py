@@ -173,8 +173,6 @@ async def consent_submit(
     emergency_contact: str = Form(""),
     medical_notes: str = Form(""),
     medical_consent: str = Form("no"),
-    photo_consent: str = Form("no"),
-    walking_home_alone: str = Form("no"),
     ai_tools_consent: str = Form("no"),
     signature_name: str = Form(...),
     signed_date: str = Form(...),
@@ -202,8 +200,6 @@ async def consent_submit(
         raise HTTPException(422, "Explicit medical information consent is required.")
     if (
         medical_consent not in {"yes", "no"}
-        or photo_consent not in {"yes", "no"}
-        or walking_home_alone not in {"yes", "no"}
         or ai_tools_consent not in {"yes", "no"}
     ):
         raise HTTPException(422, "Invalid consent selection.")
@@ -248,8 +244,6 @@ async def consent_submit(
                 "emergency_contact": emergency_contact.strip()[:300],
                 "medical_notes": medical_notes.strip()[:5000],
                 "medical_consent": medical_consent,
-                "photo_consent": photo_consent,
-                "walking_home_alone": walking_home_alone,
                 "ai_tools_consent": (
                     ai_tools_consent if ai_tools_consent in {"yes", "no"} else "no"
                 ),
