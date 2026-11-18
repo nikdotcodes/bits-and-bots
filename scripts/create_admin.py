@@ -3,8 +3,9 @@
 Run only after applying the Supabase production migration:
     uv run python scripts/create_admin.py
 """
-from getpass import getpass
+
 import re
+from getpass import getpass
 
 from bits_and_bots.audit import record_event
 from bits_and_bots.config import validate_config
@@ -26,26 +27,40 @@ def main() -> None:
         raise SystemExit("Passwords must match and contain at least 12 characters.")
 
     with db() as client:
-        existing = client.table("volunteers").select("id").eq(
-            "email", email
-        ).limit(1).execute()
+        existing = (
+            client.table("volunteers")
+            .select("id")
+            .eq("email", email)
+            .limit(1)
+            .execute()
+        )
         if existing.data:
             raise SystemExit("An account with that email already exists.")
-        result = client.table("volunteers").insert({
-            "email": email,
-            "name": name,
-            "password_hash": hash_password(password),
-            "is_admin": True,
-            "auth_provider": "password",
-        }).execute()
+        result = (
+            client.table("volunteers")
+            .insert(
+                {
+                    "email": email,
+                    "name": name,
+                    "password_hash": hash_password(password),
+                    "is_admin": True,
+                    "auth_provider": "password",
+                }
+            )
+            .execute()
+        )
         if not result.data:
             raise SystemExit("Administrator creation did not return a record.")
         admin_id = result.data[0]["id"]
         record_event(
-            actor_id=admin_id, action="admin.bootstrap",
-            resource_type="volunteer", resource_id=admin_id,
+            actor_id=admin_id,
+            action="admin.bootstrap",
+            resource_type="volunteer",
+            resource_id=admin_id,
         )
-    print("Initial administrator created. Store the credentials in your password manager.")
+    print(
+        "Initial administrator created. Store the credentials in your password manager."
+    )
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 """Minimal audit events: metadata only, never form contents or sensitive notes."""
+
 from datetime import UTC, datetime
 from typing import Any
 
@@ -6,8 +7,12 @@ from .database import db
 
 
 def record_event(
-    *, actor_id: str | int | None, action: str, resource_type: str,
-    resource_id: str | int | None = None, outcome: str = "success",
+    *,
+    actor_id: str | int | None,
+    action: str,
+    resource_type: str,
+    resource_id: str | int | None = None,
+    outcome: str = "success",
     request_id: str | None = None,
 ) -> None:
     event: dict[str, Any] = {

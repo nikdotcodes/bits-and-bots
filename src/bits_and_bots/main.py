@@ -1,10 +1,11 @@
 """FastAPI application entry point."""
-from contextlib import asynccontextmanager
-from pathlib import Path
+
 import logging
 import os
 import re
 import uuid
+from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -37,6 +38,7 @@ app = FastAPI(
 app.add_middleware(CSRFSecurityMiddleware)
 if IS_PRODUCTION:
     from urllib.parse import urlparse
+
     host = urlparse(BASE_URL).hostname
     allowed = [host] if host else []
     render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
@@ -49,7 +51,8 @@ if IS_PRODUCTION:
 async def request_context(request: Request, call_next):
     supplied_id = request.headers.get("x-request-id", "")
     request_id = (
-        supplied_id if re.fullmatch(r"[A-Za-z0-9._-]{1,64}", supplied_id)
+        supplied_id
+        if re.fullmatch(r"[A-Za-z0-9._-]{1,64}", supplied_id)
         else str(uuid.uuid4())
     )
     request.state.request_id = request_id
@@ -69,6 +72,7 @@ async def healthz():
 @app.get("/readyz", include_in_schema=False)
 async def readyz():
     from .database import db
+
     try:
         with db() as client:
             client.table("volunteers").select("id").limit(1).execute()
@@ -76,6 +80,7 @@ async def readyz():
     except Exception:
         logger.exception("Readiness check failed")
         from fastapi.responses import JSONResponse
+
         return JSONResponse({"status": "not_ready"}, status_code=503)
 
 

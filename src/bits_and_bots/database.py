@@ -1,4 +1,5 @@
 """Lazy Supabase client access. Importing the app never contacts the database."""
+
 from contextlib import contextmanager
 from functools import lru_cache
 
@@ -10,7 +11,9 @@ from .config import SUPABASE_KEY, SUPABASE_URL
 @lru_cache(maxsize=1)
 def get_client() -> Client:
     if not SUPABASE_URL or not SUPABASE_KEY:
-        raise RuntimeError("Supabase is not configured; set SUPABASE_URL and SUPABASE_KEY")
+        raise RuntimeError(
+            "Supabase is not configured; set SUPABASE_URL and SUPABASE_KEY"
+        )
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
@@ -26,4 +29,4 @@ def init_db() -> None:
     Apply version-controlled SQL migrations separately and provision the first
     administrator using the documented one-time bootstrap procedure.
     """
-    return None
+    return

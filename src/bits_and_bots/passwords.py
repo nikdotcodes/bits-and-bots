@@ -1,4 +1,5 @@
 """Password hashing with a stdlib scrypt format and legacy bcrypt verification."""
+
 import base64
 import hashlib
 import hmac
@@ -20,14 +21,15 @@ def hash_password(password: str) -> str:
         raise ValueError("Passwords must contain between 1 and 1024 characters")
     salt = os.urandom(16)
     digest = hashlib.scrypt(
-        password.encode("utf-8"), salt=salt, n=_SCRYPT_N,
-        r=_SCRYPT_R, p=_SCRYPT_P, dklen=_SCRYPT_LEN, maxmem=64 * 1024 * 1024,
+        password.encode("utf-8"),
+        salt=salt,
+        n=_SCRYPT_N,
+        r=_SCRYPT_R,
+        p=_SCRYPT_P,
+        dklen=_SCRYPT_LEN,
+        maxmem=64 * 1024 * 1024,
     )
-    return "scrypt${}${}${}".format(
-        _SCRYPT_N,
-        base64.urlsafe_b64encode(salt).decode(),
-        base64.urlsafe_b64encode(digest).decode(),
-    )
+    return f"scrypt${_SCRYPT_N}${base64.urlsafe_b64encode(salt).decode()}${base64.urlsafe_b64encode(digest).decode()}"
 
 
 def verify_password(password: str, encoded: str) -> tuple[bool, bool]:
@@ -43,11 +45,16 @@ def verify_password(password: str, encoded: str) -> tuple[bool, bool]:
             salt = base64.urlsafe_b64decode(salt64.encode())
             expected = base64.urlsafe_b64decode(digest64.encode())
             actual = hashlib.scrypt(
-                password.encode("utf-8"), salt=salt, n=n_value,
-                r=_SCRYPT_R, p=_SCRYPT_P, dklen=len(expected), maxmem=64 * 1024 * 1024,
+                password.encode("utf-8"),
+                salt=salt,
+                n=n_value,
+                r=_SCRYPT_R,
+                p=_SCRYPT_P,
+                dklen=len(expected),
+                maxmem=64 * 1024 * 1024,
             )
             return hmac.compare_digest(actual, expected), False
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return False, False
     try:
         valid = bool(encoded) and _legacy.verify(password, encoded)

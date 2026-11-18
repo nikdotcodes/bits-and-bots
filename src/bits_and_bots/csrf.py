@@ -1,4 +1,5 @@
 """Signed double-submit CSRF protection for browser form submissions."""
+
 import hashlib
 import hmac
 import secrets
@@ -25,7 +26,6 @@ def _valid_cookie(value: str | None) -> str | None:
     if hmac.compare_digest(_signature(token), signature):
         return token
     return None
-
 
 
 async def _read_body_limited(request: Request, limit: int) -> bytes | None:
@@ -63,7 +63,9 @@ def _secure_response(response: Response) -> Response:
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("X-Frame-Options", "DENY")
-    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault(
+        "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
+    )
     response.headers.setdefault(
         "Content-Security-Policy",
         "default-src 'self'; base-uri 'self'; form-action 'self'; "
@@ -72,7 +74,9 @@ def _secure_response(response: Response) -> Response:
         "font-src 'self' https://fonts.gstatic.com",
     )
     if COOKIE_SECURE:
-        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
     return response
 
 
@@ -91,34 +95,47 @@ class CSRFSecurityMiddleware(BaseHTTPMiddleware):
             if "application/x-www-form-urlencoded" in content_type:
                 body = await _read_body_limited(request, 64 * 1024)
                 if body is None:
-                    return _secure_response(Response("Request body too large", status_code=413))
+                    return _secure_response(
+                        Response("Request body too large", status_code=413)
+                    )
                 values = parse_qs(body.decode("utf-8", "replace"))
                 supplied = (values.get("_csrf") or [None])[0]
             elif "multipart/form-data" in content_type:
                 body = await _read_body_limited(request, 6 * 1024 * 1024)
                 if body is None:
-                    return _secure_response(Response("Request body too large", status_code=413))
+                    return _secure_response(
+                        Response("Request body too large", status_code=413)
+                    )
                 form = await request.form(max_files=1, max_fields=40)
                 supplied = str(form.get("_csrf", ""))
 
             if not supplied or not hmac.compare_digest(str(supplied), token):
                 response = Response(
-                    "CSRF validation failed", status_code=403,
+                    "CSRF validation failed",
+                    status_code=403,
                     headers={"Cache-Control": "no-store"},
                 )
                 if new_cookie:
                     response.set_cookie(
-                        CSRF_COOKIE, f"{token}.{_signature(token)}",
-                        httponly=True, secure=COOKIE_SECURE, samesite="lax",
-                        path="/", max_age=86400,
+                        CSRF_COOKIE,
+                        f"{token}.{_signature(token)}",
+                        httponly=True,
+                        secure=COOKIE_SECURE,
+                        samesite="lax",
+                        path="/",
+                        max_age=86400,
                     )
                 return _secure_response(response)
 
         response = await call_next(request)
         if new_cookie:
             response.set_cookie(
-                CSRF_COOKIE, f"{token}.{_signature(token)}",
-                httponly=True, secure=COOKIE_SECURE, samesite="lax",
-                path="/", max_age=86400,
+                CSRF_COOKIE,
+                f"{token}.{_signature(token)}",
+                httponly=True,
+                secure=COOKIE_SECURE,
+                samesite="lax",
+                path="/",
+                max_age=86400,
             )
         return _secure_response(response)

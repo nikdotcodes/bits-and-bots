@@ -2,6 +2,7 @@
 
 Production deployments fail closed when required secrets or URLs are missing.
 """
+
 import base64
 import json
 import os
@@ -11,12 +12,15 @@ from urllib.parse import urlparse
 # Load .env only for local development. Production secrets must come from the host.
 if os.getenv("ENVIRONMENT", "development").lower() != "production":
     from dotenv import load_dotenv
+
     load_dotenv()
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 IS_PRODUCTION = ENVIRONMENT == "production"
 
-SECRET_KEY = os.getenv("SECRET_KEY", "") or ("" if IS_PRODUCTION else secrets.token_urlsafe(48))
+SECRET_KEY = os.getenv("SECRET_KEY", "") or (
+    "" if IS_PRODUCTION else secrets.token_urlsafe(48)
+)
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -24,6 +28,7 @@ COOKIE_SECURE = IS_PRODUCTION or urlparse(BASE_URL).scheme == "https"
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "28800"))
 CONSENT_BUCKET = os.getenv("CONSENT_BUCKET", "consent-documents")
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
 
 def validate_config() -> None:
     required = {
@@ -56,6 +61,8 @@ def validate_config() -> None:
         except Exception:
             role = None
         if role != "service_role":
-            raise RuntimeError("SUPABASE_KEY must be a server-side secret/service-role key")
+            raise RuntimeError(
+                "SUPABASE_KEY must be a server-side secret/service-role key"
+            )
     if SESSION_TTL_SECONDS < 300 or SESSION_TTL_SECONDS > 86400:
         raise RuntimeError("SESSION_TTL_SECONDS must be between 300 and 86400")

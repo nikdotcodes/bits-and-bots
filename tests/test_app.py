@@ -4,10 +4,9 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from bits_and_bots import database
+from bits_and_bots import database, security
 from bits_and_bots.main import app
 from bits_and_bots.passwords import hash_password, verify_password
-from bits_and_bots import security
 
 
 class FakeQuery:
@@ -35,9 +34,7 @@ def client(monkeypatch):
 
 
 def csrf_token(response):
-    match = re.search(
-        r'name="_csrf" value="([^"]+)"', response.text
-    )
+    match = re.search(r'name="_csrf" value="([^"]+)"', response.text)
     assert match, "form should contain a CSRF token"
     return match.group(1)
 
@@ -45,9 +42,19 @@ def csrf_token(response):
 @pytest.mark.parametrize(
     "path",
     [
-        "/", "/about", "/blog", "/microbit", "/python", "/resources",
-        "/safety/online", "/safety/ai", "/donate", "/contact",
-        "/consent", "/privacy-notice", "/volunteers/login",
+        "/",
+        "/about",
+        "/blog",
+        "/microbit",
+        "/python",
+        "/resources",
+        "/safety/online",
+        "/safety/ai",
+        "/donate",
+        "/contact",
+        "/consent",
+        "/privacy-notice",
+        "/volunteers/login",
     ],
 )
 def test_public_pages_render(client, path):
@@ -70,7 +77,8 @@ def test_csrf_rejects_missing_token(client):
     response = client.post(
         "/contact",
         data={
-            "name": "Example", "email": "parent@example.test",
+            "name": "Example",
+            "email": "parent@example.test",
             "message": "Please contact me",
         },
     )
@@ -119,7 +127,6 @@ def test_password_hash_rejects_extreme_length():
         hash_password("x" * 1025)
 
 
-
 def test_csrf_accepts_multipart_form_token(client):
     page = client.get("/consent")
     token = csrf_token(page)
@@ -146,9 +153,12 @@ def test_csrf_accepts_multipart_form_token(client):
 
 def test_non_admin_is_rejected(monkeypatch):
     monkeypatch.setattr(
-        security, "get_current_volunteer",
+        security,
+        "get_current_volunteer",
         lambda request: {
-            "id": 1, "email": "volunteer@example.test", "is_admin": False,
+            "id": 1,
+            "email": "volunteer@example.test",
+            "is_admin": False,
         },
     )
     with TestClient(app) as test_client:

@@ -110,7 +110,9 @@ async def donate(request: Request):
 
 @router.get("/privacy-notice", response_class=HTMLResponse)
 async def privacy_notice(request: Request):
-    return templates.TemplateResponse(request, "privacy-notice.html", {"BASE_URL": BASE_URL})
+    return templates.TemplateResponse(
+        request, "privacy-notice.html", {"BASE_URL": BASE_URL}
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -135,9 +137,7 @@ async def contact_submit(
     client_ip = request.client.host if request.client else "unknown"
     if not name.strip() or not message.strip() or "@" not in email:
         raise HTTPException(422, "Please provide a name, valid email and message.")
-    if not consume_rate_limit(
-        f"contact:{client_ip}", limit=10, window_seconds=600
-    ):
+    if not consume_rate_limit(f"contact:{client_ip}", limit=10, window_seconds=600):
         raise HTTPException(429, "Too many submissions. Please try again later.")
     try:
         with db() as supabase:
@@ -181,15 +181,22 @@ async def consent_submit(
     consent_file: UploadFile | None = File(None),
 ):
     client_ip = request.client.host if request.client else "unknown"
-    if not consume_rate_limit(
-        f"consent:{client_ip}", limit=5, window_seconds=3600
-    ):
+    if not consume_rate_limit(f"consent:{client_ip}", limit=5, window_seconds=3600):
         raise HTTPException(429, "Too many submissions. Please try again later.")
-    if not all([
-        child_first_name.strip(), child_last_initial.strip(),
-        child_year_group.strip(), parent_name.strip(),
-        parent_email.strip(), signature_name.strip(), signed_date.strip(),
-    ]) or "@" not in parent_email:
+    if (
+        not all(
+            [
+                child_first_name.strip(),
+                child_last_initial.strip(),
+                child_year_group.strip(),
+                parent_name.strip(),
+                parent_email.strip(),
+                signature_name.strip(),
+                signed_date.strip(),
+            ]
+        )
+        or "@" not in parent_email
+    ):
         raise HTTPException(422, "Please complete all required consent details.")
     if medical_notes.strip() and medical_consent != "yes":
         raise HTTPException(422, "Explicit medical information consent is required.")
@@ -214,15 +221,21 @@ async def consent_submit(
         }
         if content_type not in signatures or not signatures[content_type]:
             raise HTTPException(415, "Only valid PDF, JPEG or PNG files are accepted.")
-        suffix = {"application/pdf": ".pdf", "image/jpeg": ".jpg", "image/png": ".png"}[content_type]
-        file_name = Path(consent_file.filename).name.replace("\\x00", "")[:180] or f"consent{suffix}"
+        suffix = {"application/pdf": ".pdf", "image/jpeg": ".jpg", "image/png": ".png"}[
+            content_type
+        ]
+        file_name = (
+            Path(consent_file.filename).name.replace("\\x00", "")[:180]
+            or f"consent{suffix}"
+        )
         storage_path = f"submissions/{uuid4().hex}{suffix}"
 
     try:
         with db() as supabase:
             if storage_path:
                 supabase.storage.from_(CONSENT_BUCKET).upload(
-                    storage_path, data,
+                    storage_path,
+                    data,
                     file_options={"content-type": content_type, "upsert": "false"},
                 )
             payload = {
@@ -237,7 +250,9 @@ async def consent_submit(
                 "medical_consent": medical_consent,
                 "photo_consent": photo_consent,
                 "walking_home_alone": walking_home_alone,
-                "ai_tools_consent": ai_tools_consent if ai_tools_consent in {"yes", "no"} else "no",
+                "ai_tools_consent": (
+                    ai_tools_consent if ai_tools_consent in {"yes", "no"} else "no"
+                ),
                 "signature_name": signature_name.strip()[:160],
                 "signed_date": signed_date,
                 "file_name": file_name,
@@ -258,9 +273,13 @@ async def consent_submit(
         if storage_path:
             try:
                 with db() as supabase:
-                    linked = supabase.table("consent_submissions").select(
-                        "id"
-                    ).eq("storage_path", storage_path).limit(1).execute()
+                    linked = (
+                        supabase.table("consent_submissions")
+                        .select("id")
+                        .eq("storage_path", storage_path)
+                        .limit(1)
+                        .execute()
+                    )
                     if not linked.data:
                         supabase.storage.from_(CONSENT_BUCKET).remove([storage_path])
             except Exception:
