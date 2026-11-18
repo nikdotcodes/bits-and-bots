@@ -12,6 +12,7 @@
 {% else %}
     <div class="card">
         <form method="post">
+<input type="hidden" name="_csrf" value="{{ request.state.csrf_token }}">
             {% from 'macros.html' import field %}
             <div class="row">{{ field('Your name','name',required=True) }}{{ field('Email','email',type='email',required=True) }}</div>
             <div class="row">{{ field('Phone (optional)', 'phone') }}{{ field("Child's year group (optional)",'child_year_group',placeholder='e.g. Year 4') }}</div>

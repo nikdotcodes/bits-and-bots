@@ -1,47 +1,46 @@
-# Build artifacts and cache
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Source-control metadata and local environments
+.git/
+.venv/
+venv/
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Project specific
-.env
-.env.local
 .pytest_cache/
 .ruff_cache/
-.python-version
-*.db
-codeclub.db
+.mypy_cache/
 
-# Docker
+# Local databases and personal data
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.sql.gz
+
+# OS/editor/build artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+dist/
+build/
+*.egg-info/
+
+# Files not needed in the runtime image build context
+tests/
+scripts/
+supabase/
+docs/
+.github/
+render.yaml
+DOCKER_SETUP.md
+migrate.py
+Makefile
+
+# Docker overrides
 docker-compose.override.yml

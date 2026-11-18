@@ -1,18 +1,14 @@
+# Local development only. Production deployments use the Dockerfile via Render.
 services:
   app:
     build: .
     ports:
       - "8000:8000"
     environment:
-      - PYTHONUNBUFFERED=1
+      ENVIRONMENT: development
+      PYTHONUNBUFFERED: "1"
     env_file:
       - .env
     volumes:
       - ./src:/app/src
     restart: unless-stopped
-    networks:
-      - bits-and-bots-network
-
-networks:
-  bits-and-bots-network:
-    driver: bridge

@@ -1,22 +1,56 @@
-# Bits and Bots
+# Bits and Bots Code Club
 
-## Run locally
+FastAPI/Jinja application backed by Supabase. This repository is configured for a
+Docker deployment on Render.
+
+## Local development
+
+Install dependencies with [uv](https://docs.astral.sh/uv/):
 
 ```sh
-uv run bits-and-bots
+uv sync --all-groups
+cp .env.example .env
+uv run uvicorn bits_and_bots.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The app listens on `http://127.0.0.1:8000`. Configure optional settings with
-environment variables: `SECRET_KEY`, `DB_PATH`, `BASE_URL`.
+For local use, configure a development Supabase project if you need database-backed
+features. Public pages and the test suite can run without connecting to production.
 
-Run the test suite with `make test`.
+Run checks:
+
+```sh
+uv run pytest
+uv run python -m compileall -q src tests scripts
+docker build -t bits-and-bots:local .
+```
+
+## Production
+
+Read [the production deployment and security runbook](docs/PRODUCTION_DEPLOYMENT.md)
+before deploying. It covers the Supabase SQL migration, private consent storage,
+initial administrator provisioning, Render configuration, tests, backup and launch
+checks.
+
+**Do not deploy until the SQL migration has been tested against a separate project,
+the real schema has been verified, a backup/restore has been tested, and the
+administrator account has been provisioned securely.**
 
 ## Application layout
 
-- `src/bits_and_bots/main.py` creates the FastAPI app and mounts the routers.
-- `src/bits_and_bots/routers/` contains authentication, public, and volunteer routes.
-- `src/bits_and_bots/templates.py` configures the filesystem-backed Jinja loader.
-- `src/bits_and_bots/web_templates/` contains the Jinja page, base, and macro templates.
-- `src/bits_and_bots/static/styles.css` contains the shared theme.
-- `src/bits_and_bots/database.py`, `security.py`, and `config.py` contain persistence,
-  session security, and configuration.
+- `src/bits_and_bots/main.py` — FastAPI app, health checks and middleware.
+- `src/bits_and_bots/routers/` — public, authentication and administrator routes.
+- `src/bits_and_bots/security.py` — opaque revocable sessions and role dependencies.
+- `src/bits_and_bots/csrf.py` — signed double-submit CSRF protection.
+- `src/bits_and_bots/audit.py` — metadata-only audit events.
+- `src/bits_and_bots/database.py` — lazy Supabase client.
+- `supabase/migrations/` — version-controlled SQL security migration.
+- `scripts/create_admin.py` — one-time initial administrator provisioning.
+- `scripts/migrate_consent_files_to_storage.py` — dry-run-first legacy file migration.
+- `render.yaml` — Render Blueprint configuration.
+
+## Important data handling
+
+Never commit `.env`, Supabase secret keys, local database files, real consent scans,
+or production exports. Consent and contact records contain sensitive information,
+including children's and potentially special-category health data. Restrict access,
+apply the data-retention policy, and follow the incident-response process.

@@ -1,10 +1,13 @@
 from datetime import UTC, datetime
+from pathlib import Path
+from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from ..config import BASE_URL
+from ..config import BASE_URL, CONSENT_BUCKET, MAX_UPLOAD_BYTES
 from ..database import db
+from ..security import consume_rate_limit
 from ..templates import templates
 
 router = APIRouter()
@@ -122,27 +125,34 @@ async def contact_page(request: Request, sent: bool = False):
 
 @router.post("/contact")
 async def contact_submit(
+    request: Request,
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(""),
     child_year_group: str = Form(""),
     message: str = Form(...),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+    if not name.strip() or not message.strip() or "@" not in email:
+        raise HTTPException(422, "Please provide a name, valid email and message.")
+    if not consume_rate_limit(
+        f"contact:{client_ip}", limit=10, window_seconds=600
+    ):
+        raise HTTPException(429, "Too many submissions. Please try again later.")
     try:
         with db() as supabase:
             supabase.table("contact_messages").insert(
                 {
-                    "name": name.strip(),
-                    "email": email.strip(),
-                    "phone": phone.strip(),
-                    "child_year_group": child_year_group,
-                    "message": message.strip(),
+                    "name": name.strip()[:160],
+                    "email": email.strip().lower()[:254],
+                    "phone": phone.strip()[:40],
+                    "child_year_group": child_year_group[:40],
+                    "message": message.strip()[:10000],
                     "created_at": datetime.now(UTC).isoformat(),
                 }
             ).execute()
         return RedirectResponse("/contact?sent=true", status_code=303)
-    except Exception as e:
-        print(f"Error saving contact message: {e}")
+    except Exception:
         return RedirectResponse("/contact?error=true", status_code=303)
 
 
@@ -153,6 +163,7 @@ async def consent_page(request: Request, sent: bool = False):
 
 @router.post("/consent")
 async def consent_submit(
+    request: Request,
     child_first_name: str = Form(...),
     child_last_initial: str = Form(...),
     child_year_group: str = Form(...),
@@ -161,39 +172,97 @@ async def consent_submit(
     parent_phone: str = Form(""),
     emergency_contact: str = Form(""),
     medical_notes: str = Form(""),
+    medical_consent: str = Form("no"),
+    photo_consent: str = Form("no"),
+    walking_home_alone: str = Form("no"),
     ai_tools_consent: str = Form("no"),
     signature_name: str = Form(...),
     signed_date: str = Form(...),
     consent_file: UploadFile | None = File(None),
 ):
-    file_name, file_data = "", None
+    client_ip = request.client.host if request.client else "unknown"
+    if not consume_rate_limit(
+        f"consent:{client_ip}", limit=5, window_seconds=3600
+    ):
+        raise HTTPException(429, "Too many submissions. Please try again later.")
+    if not all([
+        child_first_name.strip(), child_last_initial.strip(),
+        child_year_group.strip(), parent_name.strip(),
+        parent_email.strip(), signature_name.strip(), signed_date.strip(),
+    ]) or "@" not in parent_email:
+        raise HTTPException(422, "Please complete all required consent details.")
+    if medical_notes.strip() and medical_consent != "yes":
+        raise HTTPException(422, "Explicit medical information consent is required.")
+    if (
+        medical_consent not in {"yes", "no"}
+        or photo_consent not in {"yes", "no"}
+        or walking_home_alone not in {"yes", "no"}
+        or ai_tools_consent not in {"yes", "no"}
+    ):
+        raise HTTPException(422, "Invalid consent selection.")
+
+    file_name, storage_path = "", None
     if consent_file and consent_file.filename:
-        data = await consent_file.read()
-        if len(data) > 5 * 1024 * 1024:
-            raise HTTPException(413, "Scan must be under 5 MB (PDF please).")
-        file_name, file_data = consent_file.filename, data
-    
+        data = await consent_file.read(MAX_UPLOAD_BYTES + 1)
+        if len(data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(413, "Scan must be under 5 MB.")
+        content_type = (consent_file.content_type or "").lower()
+        signatures = {
+            "application/pdf": data.startswith(b"%PDF-"),
+            "image/jpeg": data.startswith(b"\\xff\\xd8\\xff"),
+            "image/png": data.startswith(b"\\x89PNG\\r\\n\\x1a\\n"),
+        }
+        if content_type not in signatures or not signatures[content_type]:
+            raise HTTPException(415, "Only valid PDF, JPEG or PNG files are accepted.")
+        suffix = {"application/pdf": ".pdf", "image/jpeg": ".jpg", "image/png": ".png"}[content_type]
+        file_name = Path(consent_file.filename).name.replace("\\x00", "")[:180] or f"consent{suffix}"
+        storage_path = f"submissions/{uuid4().hex}{suffix}"
+
     try:
         with db() as supabase:
-            supabase.table("consent_submissions").insert(
+            if storage_path:
+                supabase.storage.from_(CONSENT_BUCKET).upload(
+                    storage_path, data,
+                    file_options={"content-type": content_type, "upsert": "false"},
+                )
+            payload = {
+                "child_first_name": child_first_name.strip()[:100],
+                "child_last_initial": child_last_initial.strip()[:1].upper(),
+                "child_year_group": child_year_group.strip()[:40],
+                "parent_name": parent_name.strip()[:160],
+                "parent_email": parent_email.strip().lower()[:254],
+                "parent_phone": parent_phone.strip()[:40],
+                "emergency_contact": emergency_contact.strip()[:300],
+                "medical_notes": medical_notes.strip()[:5000],
+                "medical_consent": medical_consent,
+                "photo_consent": photo_consent,
+                "walking_home_alone": walking_home_alone,
+                "ai_tools_consent": ai_tools_consent if ai_tools_consent in {"yes", "no"} else "no",
+                "signature_name": signature_name.strip()[:160],
+                "signed_date": signed_date,
+                "file_name": file_name,
+                "storage_path": storage_path,
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+            supabase.rpc(
+                "submit_consent_with_audit",
                 {
-                    "child_first_name": child_first_name.strip(),
-                    "child_last_initial": child_last_initial.strip(),
-                    "child_year_group": child_year_group,
-                    "parent_name": parent_name.strip(),
-                    "parent_email": parent_email.strip(),
-                    "parent_phone": parent_phone.strip(),
-                    "emergency_contact": emergency_contact.strip(),
-                    "medical_notes": medical_notes.strip(),
-                    "ai_tools_consent": ai_tools_consent,
-                    "signature_name": signature_name.strip(),
-                    "signed_date": signed_date,
-                    "file_name": file_name,
-                    "file_data": file_data,
-                    "created_at": datetime.now(UTC).isoformat(),
-                }
+                    "p_payload": payload,
+                    "p_request_id": getattr(request.state, "request_id", None),
+                },
             ).execute()
         return RedirectResponse("/consent?sent=true", status_code=303)
-    except Exception as e:
-        print(f"Error saving consent submission: {e}")
+    except Exception:
+        # A network timeout may occur after the RPC committed. Keep the object if
+        # a consent row references it; otherwise remove the orphaned upload.
+        if storage_path:
+            try:
+                with db() as supabase:
+                    linked = supabase.table("consent_submissions").select(
+                        "id"
+                    ).eq("storage_path", storage_path).limit(1).execute()
+                    if not linked.data:
+                        supabase.storage.from_(CONSENT_BUCKET).remove([storage_path])
+            except Exception:
+                pass
         return RedirectResponse("/consent?error=true", status_code=303)

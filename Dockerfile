@@ -1,44 +1,39 @@
+
 # Build stage
 FROM python:3.14-slim AS builder
 
 WORKDIR /app
 
-# Install uv
 RUN pip install --no-cache-dir uv
 
-# Copy project files needed for building
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 
-# Install dependencies
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
-# Runtime stage
+# Production stage
 FROM python:3.14-slim
 
 WORKDIR /app
 
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+RUN groupadd --system app && \
+    useradd --system --gid app --create-home app && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy virtual environment from builder
-COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+COPY --chown=app:app src ./src
 
-# Copy application code
-COPY src ./src
-COPY .env ./.env
-
-# Set environment variables
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-# Expose port
+USER app
+
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/', timeout=5)" || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+    CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.getenv('PORT','8000') + '/healthz', timeout=2)"
 
-# Run the application
-CMD ["uvicorn", "bits_and_bots.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "exec uvicorn bits_and_bots.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
