@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+import logging
+
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -9,6 +11,8 @@ from ..config import BASE_URL, CONSENT_BUCKET, MAX_UPLOAD_BYTES
 from ..database import db
 from ..security import consume_rate_limit
 from ..templates import templates
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -262,6 +266,7 @@ async def consent_submit(
             ).execute()
         return RedirectResponse("/consent?sent=true", status_code=303)
     except Exception:
+        logger.exception("Consent submission failed")
         # A network timeout may occur after the RPC committed. Keep the object if
         # a consent row references it; otherwise remove the orphaned upload.
         if storage_path:
