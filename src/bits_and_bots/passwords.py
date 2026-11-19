@@ -59,5 +59,5 @@ def verify_password(password: str, encoded: str) -> tuple[bool, bool]:
     try:
         valid = bool(encoded) and _legacy.verify(password, encoded)
         return valid, valid
-    except Exception:
+    except Exception: # noqa: BLE001
         return False, False

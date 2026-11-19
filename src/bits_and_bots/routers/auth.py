@@ -97,7 +97,7 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
         response = RedirectResponse("/volunteers", status_code=303)
         set_session_cookie(response, token, COOKIE_SECURE)
         return response
-    except Exception:
+    except Exception: # noqa: BLE001
         return RedirectResponse("/volunteers/login?error=bad", status_code=303)
 
 
@@ -117,7 +117,7 @@ async def logout(request: Request):
                     resource_type="volunteer",
                     resource_id=current["id"],
                 )
-        except Exception:
+        except Exception: # noqa: BLE001
             # Do not report a successful logout if server-side revocation failed.
             from fastapi import HTTPException
 

@@ -155,7 +155,7 @@ async def contact_submit(
                 }
             ).execute()
         return RedirectResponse("/contact?sent=true", status_code=303)
-    except Exception:
+    except Exception: # noqa: BLE001
         return RedirectResponse("/contact?error=true", status_code=303)
 
 
@@ -277,7 +277,7 @@ async def consent_submit(
                     )
                     if not linked.data:
                         supabase.storage.from_(CONSENT_BUCKET).remove([storage_path])
-            except Exception:
+            except Exception: # noqa: BLE001
                 logger.warning(
                     "Could not verify or clean up an uploaded consent document",
                     exc_info=False,

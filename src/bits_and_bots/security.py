@@ -30,7 +30,7 @@ def consume_rate_limit(key: str, *, limit: int, window_seconds: int) -> bool:
                 },
             ).execute()
         return result.data is True
-    except Exception:
+    except Exception: # noqa: BLE001
         return False
 
 
@@ -90,7 +90,7 @@ def get_current_volunteer(request: Request) -> dict[str, Any] | None:
                 .execute()
             )
             return volunteers.data[0] if volunteers.data else None
-    except Exception:
+    except Exception: # noqa: BLE001
         return None
 
 

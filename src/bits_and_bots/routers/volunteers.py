@@ -60,7 +60,7 @@ async def volunteer_dashboard(request: Request, volunteer: Admin):
                     "pending": pending,
                 },
             )
-    except Exception:
+    except Exception: # noqa: BLE001
         raise HTTPException(503, "Dashboard temporarily unavailable")
 
 
@@ -98,7 +98,7 @@ async def sign_off_consent(
                 raise HTTPException(409, "Consent has already been processed")
     except HTTPException:
         raise
-    except Exception:
+    except Exception: # noqa: BLE001
         raise HTTPException(503, "Consent update could not be completed")
     return RedirectResponse("/volunteers", status_code=303)
 
@@ -153,7 +153,7 @@ async def download_consent_file(consent_id: int, volunteer: Admin):
             )
     except HTTPException:
         raise
-    except Exception:
+    except Exception: # noqa: BLE001
         raise HTTPException(503, "Document temporarily unavailable")
 
 
@@ -191,6 +191,6 @@ async def add_resource(
                 resource_id=result.data[0].get("id") if result.data else None,
                 request_id=getattr(request.state, "request_id", None),
             )
-    except Exception:
+    except Exception: # noqa: BLE001
         raise HTTPException(503, "Resource could not be saved")
     return RedirectResponse("/volunteers", status_code=303)
