@@ -58,7 +58,12 @@ def validate_config() -> None:
             payload = SUPABASE_KEY.split(".")[1]
             payload += "=" * (-len(payload) % 4)
             role = json.loads(base64.urlsafe_b64decode(payload)).get("role")
-        except Exception:
+        except (
+            IndexError,
+            ValueError,
+            TypeError,
+            UnicodeDecodeError,
+        ):
             role = None
         if role != "service_role":
             raise RuntimeError(

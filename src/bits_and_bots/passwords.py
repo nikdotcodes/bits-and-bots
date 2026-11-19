@@ -54,7 +54,7 @@ def verify_password(password: str, encoded: str) -> tuple[bool, bool]:
                 maxmem=64 * 1024 * 1024,
             )
             return hmac.compare_digest(actual, expected), False
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return False, False
     try:
         valid = bool(encoded) and _legacy.verify(password, encoded)

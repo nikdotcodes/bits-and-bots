@@ -21,7 +21,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "djlint>=1.50.0",
+    "pip-audit>=2.10.1",
     "pytest>=8.3.0",
+    "ruff>=0.17.5",
 ]
 
 [project.scripts]
@@ -30,3 +32,6 @@ bits-and-bots = "bits_and_bots:main"
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.ruff.lint.per-file-ignores]
+"src/bits_and_bots/routers/public.py" = ["B008"]

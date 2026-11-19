@@ -1,8 +1,7 @@
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
-
-import logging
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -202,10 +201,7 @@ async def consent_submit(
         raise HTTPException(422, "Please complete all required consent details.")
     if medical_notes.strip() and medical_consent != "yes":
         raise HTTPException(422, "Explicit medical information consent is required.")
-    if (
-        medical_consent not in {"yes", "no"}
-        or ai_tools_consent not in {"yes", "no"}
-    ):
+    if medical_consent not in {"yes", "no"} or ai_tools_consent not in {"yes", "no"}:
         raise HTTPException(422, "Invalid consent selection.")
 
     file_name, storage_path = "", None
@@ -282,5 +278,8 @@ async def consent_submit(
                     if not linked.data:
                         supabase.storage.from_(CONSENT_BUCKET).remove([storage_path])
             except Exception:
-                pass
+                logger.warning(
+                    "Could not verify or clean up an uploaded consent document",
+                    exc_info=False,
+                )
         return RedirectResponse("/consent?error=true", status_code=303)
