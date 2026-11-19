@@ -24,17 +24,6 @@ uv run python -m compileall -q src tests scripts
 docker build -t bits-and-bots:local .
 ```
 
-## Production
-
-Read [the production deployment and security runbook](docs/PRODUCTION_DEPLOYMENT.md)
-before deploying. It covers the Supabase SQL migration, private consent storage,
-initial administrator provisioning, Render configuration, tests, backup and launch
-checks.
-
-**Do not deploy until the SQL migration has been tested against a separate project,
-the real schema has been verified, a backup/restore has been tested, and the
-administrator account has been provisioned securely.**
-
 ## Application layout
 
 - `src/bits_and_bots/main.py` — FastAPI app, health checks and middleware.
